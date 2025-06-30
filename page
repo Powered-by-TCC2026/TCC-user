@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ゲストカード画像認証</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body {
+      margin: 0;
+      background: #f5f7fa;
+      color: #222;
+      font-family: 'Segoe UI', 'Yu Gothic', 'Meiryo', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+    }
+    header {
+      width: 100%;
+      background: linear-gradient(90deg, #4e54c8 0%, #8f94fb 100%);
+      color: #fff;
+      padding: 32px 0 16px 0;
+      text-align: center;
+      font-size: 2.1rem;
+      letter-spacing: 0.05em;
+      box-shadow: 0 2px 8px #0001;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 24px 8px;
+    }
+    #card_img {
+      margin: 32px auto 0 auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px #0002;
+      width: 100%;
+      max-width: 420px;
+      display: none;
+      background: #fff;
+    }
+    #download_btn {
+      display: none;
+      margin-top: 20px;
+      padding: 12px 32px;
+      background: linear-gradient(90deg, #4e54c8 0%, #8f94fb 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      box-shadow: 0 2px 8px #0001;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-decoration: none;
+    }
+    #download_btn:hover {
+      background: linear-gradient(90deg, #6e72fc 0%, #b3c6fd 100%);
+    }
+    #notfound {
+      margin-top: 36px;
+      font-size: 1.2rem;
+      color: #e74c3c;
+      font-weight: bold;
+      background: #fff5f5;
+      border: 1px solid #e74c3c44;
+      padding: 18px 12px;
+      border-radius: 10px;
+      max-width: 400px;
+      word-break: break-all;
+      display: none;
+    }
+    @media (max-width: 600px) {
+      header { font-size: 1.3rem; padding: 18px 0 10px 0;}
+      #card_img { max-width: 98vw; }
+      #download_btn { width: 90vw; font-size: 1rem;}
+      #notfound { max-width: 96vw; font-size: 1rem; padding: 14px 6px;}
+      main { padding: 12px 2px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    ゲストカード画像 認証ページ
+  </header>
+  <main>
+    <img id="card_img" alt="ゲストカード画像">
+    <a id="download_btn" download>カード画像をダウンロード</a>
+    <div id="notfound"></div>
+  </main>
+  <script>
+    // パスワード一覧をfetchで取得
+    let pwList = {};
+    fetch('cards/password.json')
+      .then(resp => resp.json())
+      .then(data => {
+        pwList = data;
+        checkAuth();
+      });
+
+    function checkAuth() {
+      const params = new URLSearchParams(window.location.search);
+      const file = params.get('file');
+      const pw = params.get('pw');
+      const img = document.getElementById('card_img');
+      const notfound = document.getElementById('notfound');
+      const downloadBtn = document.getElementById('download_btn');
+
+      function showError(msg) {
+        notfound.textContent = msg;
+        notfound.style.display = "block";
+        img.style.display = "none";
+        downloadBtn.style.display = "none";
+      }
+
+      if(file && pw) {
+        if(pwList[file] && pwList[file] === pw) {
+          const imgUrl = "cards/" + file;
+          img.src = imgUrl;
+          img.style.display = "block";
+          notfound.style.display = "none";
+          // ダウンロードボタン設定
+          downloadBtn.href = imgUrl;
+          downloadBtn.download = file;
+          downloadBtn.style.display = "inline-block";
+          img.onerror = function() {
+            showError("画像が見つかりません。（管理者にご連絡ください）");
+          }
+        } else {
+          showError("パスワードが違います。URLをご確認ください。");
+        }
+      } else {
+        showError("URLが正しくありません。");
+      }
+    }
+  </script>
+</body>
